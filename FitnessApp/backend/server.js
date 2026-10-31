@@ -1,4 +1,7 @@
+import './loadSecrets.js'
 import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import 'express-async-errors'
@@ -17,12 +20,13 @@ import classRoutes from './routes/classRoutes.js'
 
 
 const app = express()
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 8000
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 app.use(cors())
 app.use(express.json())
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({
     message: 'FitSphere API is running',
     version: '1.0.0',
@@ -46,6 +50,11 @@ app.use('/api/health-tips', healthTipRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/diet-plans', dietPlanRoutes)
 app.use('/api/classes', classRoutes)
+
+// Serve the React build (copied into ./public by the Dockerfile)
+const publicDir = path.join(__dirname, 'public')
+app.use(express.static(publicDir))
+app.get(/^(?!\/api).*/, (req, res) => res.sendFile(path.join(publicDir, 'index.html')))
 
 app.use((err, req, res, next) => {
   console.error(err)
